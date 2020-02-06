@@ -10,7 +10,10 @@ import time
 import json
 import os
 
-# Define recipe
+
+'''
+The Cake Recipe:
+'''
 recipe = {
     'required_ingredients' : {
         'eggs'  : 2,
@@ -29,32 +32,40 @@ recipe = {
 oven_temp = 65
 
 
-# Define functions that can mimic a relationship with a database (reading/writing)
+'''
+Pantry and Cabinet Access Functions
+(Consider these as database communication functions)
+'''
+# Read ingredients from the pantry
 def read_pantry():
     pantry_file = os.path.join(os.environ.get('AIRFLOW_HOME'),'dags','pantry.json')
     with open(pantry_file,'r') as injson:
         pantry = json.load(injson)
     return(pantry)
 
+# Write ingredients to the pantry
 def write_pantry(items):
     pantry_file = os.path.join(os.environ.get('AIRFLOW_HOME'),'dags','pantry.json')
     with open(pantry_file,'w') as outjson:
         json.dump(items, outjson, indent=4)
 
+# Read cookwear items from the cabinets
 def read_cabinets():
     cabinets_file = os.path.join(os.environ.get('AIRFLOW_HOME'),'dags','cabinets.json')
     with open(cabinets_file,'r') as injson:
         cabinets = json.load(injson)
     return(cabinets)
 
+# Write cookwear items to the cabinets
 def write_cabinets(items):
     cabinets_file = os.path.join(os.environ.get('AIRFLOW_HOME'),'dags','cabinets.json')
     with open(cabinets_file,'w') as outjson:
         json.dump(items, outjson, indent=4)
 
 
-
-# Functions
+'''
+Cake Baking Methods:
+'''
 # Acquire the necessary ingredients until there are not enough left
 def get_ingredients(required):
     # Read items from the pantry
@@ -193,8 +204,13 @@ def branch(**kwargs):
         return(['wash_dishes', 'return_ingredients'])
 
 
+# =========================================================
 
-# Define the DAG
+
+'''
+The DAG
+'''
+# Define the default arguments
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -205,6 +221,8 @@ default_args = {
     'retry_delay': datetime.timedelta(seconds=5),
     'concurrency': 1
 }
+
+# Define the DAG and its operators
 with DAG(
         dag_id='easybake',
         description='Baking cakes until we run out of ingredients with a DAG',
@@ -212,7 +230,6 @@ with DAG(
         catchup=False,
         schedule_interval='@daily'
     ) as dag:
-    # Define operators for DAG
     opr_get_ingredients = PythonOperator(
         task_id='get_ingredients',
         python_callable=get_ingredients,
@@ -267,6 +284,7 @@ with DAG(
         op_kwargs={'required':recipe['required_cookwear']}
     )
 
+# Define the DAG structure
 [opr_get_ingredients, opr_get_cookwear] >> opr_branch
 opr_branch >> [opr_preheat_oven, opr_mix_ingredients] >> opr_bake_cake >> opr_cool_cake >> opr_wash_dishes
 opr_branch >> [opr_go_shopping, opr_wash_dishes]
