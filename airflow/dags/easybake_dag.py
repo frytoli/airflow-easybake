@@ -217,9 +217,9 @@ default_args = {
     'start_date': datetime.datetime(2020, 1, 1),
     'email_on_failure': False,
     'email_on_retry': False,
-    'retries': 0,
+    'retries': 1,
     'retry_delay': datetime.timedelta(seconds=5),
-    'concurrency': 1
+    'task_concurrency': 1
 }
 
 # Define the DAG and its operators
